@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}Manage Departments{% endblock %}
+{% block page_title %}Department Management{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <h1><i class="fas fa-sitemap"></i> Schools, Departments & Specializations</h1>
+  <p style="color:#6b7280;font-size:0.85rem;margin-top:4px">
+    Add or remove schools, departments and specializations. Changes reflect instantly on the student registration form.
+  </p>
+</div>
+
+{% for school in schools %}
+<div class="card mb-2">
+  <div class="card-header" style="background:linear-gradient(135deg,#0d1a5e,#1a237e);border-radius:12px 12px 0 0">
+    <div class="card-title" style="color:#f9a825;font-size:1rem">
+      <i class="fas fa-university"></i> {{ school.name }}
+      {% if school.short_name %}<span style="color:#9ca3af;font-size:0.78rem;margin-left:8px">({{ school.short_name }})</span>{% endif %}
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="badge badge-{{ 'active' if school.is_active else 'suspended' }}">
+        {{ 'ACTIVE' if school.is_active else 'INACTIVE' }}
+      </span>
+      <form method="POST" action="{{ url_for('admin.toggle_school', school_id=school.id) }}" style="display:inline">
+        <button class="btn btn-outline" style="padding:4px 10px;font-size:0.75rem;color:#f9a825;border-color:#f9a825">
+          {{ 'Deactivate' if school.is_active else 'Activate' }}
+        </button>
+      </form>
+      <form method="POST" action="{{ url_for('admin.delete_school', school_id=school.id) }}"
+            style="display:inline" onsubmit="return confirm('Delete this school and ALL its departments?')">
+        <button class="btn btn-outline" style="padding:4px 10px;font-size:0.75rem;color:#ef4444;border-color:#ef4444">
+          <i class="fas fa-trash"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div style="padding:16px">
+    {% for dept in school.departments %}
+    <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div>
+          <strong style="color:#0d1a5e;font-size:0.95rem">
+            <i class="fas fa-graduation-cap" style="color:#f9a825"></i> {{ dept.name }}
+          </strong>
+          <span style="font-size:0.75rem;color:#9ca3af;margin-left:8px">
+            {{ dept.specializations|length }} specialization(s)
+          </span>
+        </div>
+        <form method="POST" action="{{ url_for('admin.delete_department', dept_id=dept.id) }}"
+              onsubmit="return confirm('Delete {{ dept.name }} and all its specializations?')">
+          <button class="btn btn-outline" style="padding:3px 10px;font-size:0.75rem;color:#ef4444;border-color:#ef4444">
+            <i class="fas fa-trash"></i> Delete Dept
+          </button>
+        </form>
+      </div>
+
+      {% if dept.specializations %}
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+        {% for spec in dept.specializations %}
+        <div style="background:white;border:1px solid #d1d5db;border-radius:20px;padding:4px 12px;
+                    display:flex;align-items:center;gap:8px;font-size:0.8rem">
+          <span style="color:#374151">{{ spec.name }}</span>
+          {% if spec.levels %}
+          <span style="color:#9ca3af;font-size:0.7rem">({{ spec.levels }})</span>
+          {% endif %}
+          <form method="POST" action="{{ url_for('admin.delete_specialization', spec_id=spec.id) }}"
+                style="display:inline" onsubmit="return confirm('Delete specialization?')">
+            <button type="submit" style="background:none;border:none;color:#ef4444;cursor:pointer;
+                    font-size:0.7rem;padding:0;line-height:1">✕</button>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p style="color:#9ca3af;font-size:0.8rem;font-style:italic;margin-bottom:10px">
+        No specializations — all levels use the department name directly.
+      </p>
+      {% endif %}
+
+      <!-- Add Specialization -->
+      <form method="POST" action="{{ url_for('admin.add_specialization') }}"
+            style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="hidden" name="dept_id" value="{{ dept.id }}"/>
+        <input type="text" name="name" placeholder="Specialization name (e.g. Networking and Cloud Computing)"
+               style="flex:1;min-width:220px;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.82rem"/>
+        <input type="text" name="levels" placeholder="Levels (e.g. HND 1,HND 2)"
+               style="width:180px;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.82rem"/>
+        <button class="btn btn-gold" style="padding:6px 14px;font-size:0.82rem">
+          <i class="fas fa-plus"></i> Add Specialization
+        </button>
+      </form>
+    </div>
+    {% endfor %}
+
+    <!-- Add Department to this School -->
+    <form method="POST" action="{{ url_for('admin.add_department') }}"
+          style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">
+      <input type="hidden" name="school_id" value="{{ school.id }}"/>
+      <input type="text" name="name" placeholder="New department name (e.g. Cyber Security)"
+             style="flex:1;min-width:220px;padding:7px 12px;border:2px dashed #d1d5db;
+                    border-radius:8px;font-size:0.85rem;background:#fafafa"/>
+      <button class="btn btn-outline" style="padding:7px 16px;font-size:0.85rem;color:#0d1a5e;border-color:#0d1a5e">
+        <i class="fas fa-plus"></i> Add Department
+      </button>
+    </form>
+  </div>
+</div>
+{% endfor %}
+
+<!-- Add New School -->
+<div class="card mt-2" style="border:2px dashed #d1d5db">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-plus-circle" style="color:#f9a825"></i> Add New School</div>
+  </div>
+  <div style="padding:16px">
+    <form method="POST" action="{{ url_for('admin.add_school') }}"
+          style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <input type="text" name="name" placeholder="Full school name (e.g. School of Applied Sciences)"
+             required style="flex:2;min-width:250px;padding:8px 14px;border:1px solid #d1d5db;
+                             border-radius:8px;font-size:0.9rem"/>
+      <input type="text" name="short_name" placeholder="Short name (e.g. SAS)"
+             style="width:140px;padding:8px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:0.9rem"/>
+      <button class="btn btn-navy" style="padding:8px 20px">
+        <i class="fas fa-university"></i> Add School
+      </button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

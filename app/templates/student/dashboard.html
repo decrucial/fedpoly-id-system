@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Student Dashboard{% endblock %}
+{% block page_title %}My Dashboard{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-home"></i> Welcome, {{ student.full_name.split()[0] }}!</h1>
+  <a href="{{ url_for('student.id_card') }}" class="btn btn-gold btn-lg"><i class="fas fa-id-card"></i> Download My ID Card</a>
+</div>
+
+<!-- Profile Banner -->
+<div class="profile-card mb-3">
+  {% if student.photo_filename %}
+  <img src="{{ url_for('static', filename='photos/' + student.photo_filename) }}" class="profile-photo" alt="Photo"/>
+  {% else %}
+  <div class="profile-photo-placeholder"><i class="fas fa-user"></i></div>
+  {% endif %}
+  <div>
+    <div class="profile-name">{{ student.full_name }}</div>
+    <div class="profile-matric">{{ student.matric_number }}</div>
+    <div class="profile-info">
+      <div class="profile-info-item"><strong>{{ student.department }}</strong>Department</div>
+      <div class="profile-info-item"><strong>{{ student.level }}</strong>Level</div>
+      <div class="profile-info-item"><strong>{{ student.academic_session }}</strong>Session</div>
+      <div class="profile-info-item"><strong><span class="badge badge-{{ student.card_status }}">{{ student.card_status.upper() }}</span></strong>Card Status</div>
+    </div>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card gold">
+    <div class="stat-icon"><i class="fas fa-qrcode"></i></div>
+    <div><div class="stat-number">{{ scan_count }}</div><div class="stat-label">Times Scanned</div></div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-icon"><i class="fas fa-id-card"></i></div>
+    <div><div class="stat-number">{{ student.card_status.upper() }}</div><div class="stat-label">Card Status</div></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><i class="fas fa-calendar-alt"></i></div>
+    <div><div class="stat-number" style="font-size:1.1rem">{{ student.card_expiry.strftime('%b %Y') if student.card_expiry else 'N/A' }}</div><div class="stat-label">Card Expiry</div></div>
+  </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-bolt"></i> Quick Actions</div>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <a href="{{ url_for('student.id_card') }}" class="btn btn-primary btn-lg"><i class="fas fa-id-card"></i> View & Download ID Card</a>
+    <a href="{{ url_for('student.profile') }}" class="btn btn-outline btn-lg"><i class="fas fa-user"></i> My Profile & Scan History</a>
+    <a href="{{ url_for('auth.change_password') }}" class="btn btn-outline btn-lg"><i class="fas fa-lock"></i> Change Password</a>
+  </div>
+</div>
+{% endblock %}

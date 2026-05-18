@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% block title %}{{ student.full_name }}{% endblock %}
+{% block page_title %}Student Profile{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-user"></i> Student Profile</h1>
+  <div class="flex gap-2 flex-wrap">
+    <a href="{{ url_for('admin.edit_student', student_id=student.id) }}" class="btn btn-gold"><i class="fas fa-edit"></i> Edit</a>
+    <a href="{{ url_for('admin.download_card', student_id=student.id, fmt='pdf') }}" class="btn btn-primary"><i class="fas fa-file-pdf"></i> Download PDF</a>
+    <a href="{{ url_for('admin.download_card', student_id=student.id, fmt='png') }}" class="btn btn-primary"><i class="fas fa-image"></i> Download PNG</a>
+    <a href="{{ url_for('admin.report_single_student_pdf', student_id=student.id) }}" class="btn btn-outline" target="_blank"><i class="fas fa-file-alt"></i> Student Report</a>
+    <a href="{{ url_for('admin.regenerate_qr', student_id=student.id) }}" class="btn btn-outline"
+       data-confirm="Regenerate QR code? The old QR code on the printed card will no longer work.">
+      <i class="fas fa-sync-alt"></i> Regen QR
+    </a>
+    <a href="{{ url_for('admin.toggle_student_status', student_id=student.id) }}" 
+       class="btn {{ 'btn-danger' if student.card_status == 'active' else 'btn-success' }}"
+       data-confirm="Are you sure you want to {{ 'suspend' if student.card_status == 'active' else 'reactivate' }} this student?">
+      {% if student.card_status == 'active' %}<i class="fas fa-ban"></i> Suspend{% else %}<i class="fas fa-check"></i> Reactivate{% endif %}
+    </a>
+    <a href="{{ url_for('admin.students') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
+  </div>
+</div>
+
+<div class="grid-2" style="gap:24px;align-items:start">
+  <!-- Left: Info -->
+  <div>
+    <!-- Profile Banner -->
+    <div class="profile-card mb-2">
+      {% if student.photo_filename %}
+      <img src="{{ url_for('static', filename='photos/' + student.photo_filename) }}" class="profile-photo" alt="Photo"/>
+      {% else %}
+      <div class="profile-photo-placeholder"><i class="fas fa-user"></i></div>
+      {% endif %}
+      <div>
+        <div class="profile-name">{{ student.full_name }}</div>
+        <div class="profile-matric">{{ student.matric_number }}</div>
+        <div class="profile-info">
+          <div class="profile-info-item"><strong>{{ student.department }}</strong>Department</div>
+          <div class="profile-info-item"><strong>{{ student.level }}</strong>Level</div>
+          <div class="profile-info-item"><strong>{{ student.academic_session }}</strong>Session</div>
+          <div class="profile-info-item">
+            <strong>
+              <span class="badge badge-{{ student.card_status }}">{{ student.card_status.upper() }}</span>
+            </strong>Card Status
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Details Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="fas fa-info-circle"></i> Student Details</div>
+      </div>
+      <table style="width:100%">
+        {% set rows = [
+          ('School', student.school),
+          ('Gender', student.gender or '—'),
+          ('Phone', student.phone or '—'),
+          ('Date of Birth', student.date_of_birth.strftime('%d %B %Y') if student.date_of_birth else '—'),
+          ('Address', student.address or '—'),
+          ('Card Expiry', student.card_expiry.strftime('%B %Y') if student.card_expiry else '—'),
+          ('Registered', student.registered_at.strftime('%d %B %Y, %I:%M %p') if student.registered_at else '—'),
+        ] %}
+        {% for label, value in rows %}
+        <tr style="border-bottom:1px solid #f0f2f8">
+          <td style="padding:10px 0;color:#6b7280;font-size:0.8rem;font-weight:700;width:140px;text-transform:uppercase;letter-spacing:0.3px">{{ label }}</td>
+          <td style="padding:10px 0;color:#1a1a2e;font-size:0.875rem;font-weight:600">{{ value }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+
+  <!-- Right: QR + Scan Logs -->
+  <div>
+    <!-- QR Code -->
+    <div class="card mb-2" style="text-align:center">
+      <div class="card-header" style="justify-content:center">
+        <div class="card-title"><i class="fas fa-qrcode"></i> Student QR Code</div>
+      </div>
+      {% if student.qr_filename %}
+      <img src="{{ url_for('static', filename='qrcodes/' + student.qr_filename) }}"
+           style="width:200px;height:200px;border:3px solid #f9a825;border-radius:12px;margin:0 auto;display:block"/>
+      <p style="font-size:0.78rem;color:#9ca3af;margin-top:10px">
+        Scan this code to verify this student's identity.<br/>Any QR scanner app or phone camera will work.
+      </p>
+      {% else %}
+      <p style="color:#9ca3af;padding:20px">No QR code generated yet.</p>
+      {% endif %}
+      <div class="flex gap-2 justify-center mt-2">
+        <a href="{{ url_for('admin.download_card', student_id=student.id, fmt='pdf') }}" class="btn btn-primary btn-sm"><i class="fas fa-file-pdf"></i> PDF Card</a>
+        <a href="{{ url_for('admin.download_card', student_id=student.id, fmt='png') }}" class="btn btn-gold btn-sm"><i class="fas fa-image"></i> PNG Card</a>
+      </div>
+    </div>
+
+    <!-- Scan Logs -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="fas fa-history"></i> Scan History</div>
+        <span style="font-size:0.78rem;color:#9ca3af">Last 20 scans</span>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Purpose</th><th>Result</th><th>Scanner</th><th>Date & Time</th></tr>
+          </thead>
+          <tbody>
+            {% for log in scan_logs %}
+            <tr>
+              <td><span class="badge badge-{{ log.purpose or 'general' }}">{{ (log.purpose or 'general').capitalize() }}</span></td>
+              <td><span class="badge badge-{{ log.scan_result }}">{{ log.scan_result }}</span></td>
+              <td style="font-size:0.8rem">{{ log.scanned_by_user.username if log.scanned_by_user else 'Public' }}</td>
+              <td style="font-size:0.75rem;color:#6b7280">{{ log.scanned_at.strftime('%d/%m/%Y %H:%M') if log.scanned_at else '—' }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" style="text-align:center;padding:20px;color:#9ca3af">No scans recorded yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

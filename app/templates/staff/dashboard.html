@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Staff Dashboard{% endblock %}
+{% block page_title %}Staff Dashboard{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-tachometer-alt"></i> Staff Dashboard</h1>
+  <a href="{{ url_for('staff.scanner') }}" class="btn btn-gold btn-lg"><i class="fas fa-camera"></i> Open QR Scanner</a>
+</div>
+<div class="stats-grid">
+  <div class="stat-card gold">
+    <div class="stat-icon"><i class="fas fa-qrcode"></i></div>
+    <div><div class="stat-number">{{ total_scans }}</div><div class="stat-label">Total Scans Done</div></div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
+    <div><div class="stat-number">{{ today_scans }}</div><div class="stat-label">Today's Scans</div></div>
+  </div>
+</div>
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-history"></i> My Recent Scans</div>
+    <a href="{{ url_for('staff.scan_logs') }}" class="btn btn-sm btn-outline">View All</a>
+  </div>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr><th>Student Name</th><th>Matric No.</th><th>Purpose</th><th>Result</th><th>Date & Time</th></tr>
+      </thead>
+      <tbody>
+        {% for log in my_scans %}
+        <tr>
+          <td style="font-weight:700">{{ log.student.full_name if log.student else 'Unknown' }}</td>
+          <td style="font-family:monospace;font-size:0.82rem">{{ log.student.matric_number if log.student else '—' }}</td>
+          <td><span class="badge badge-{{ log.purpose or 'general' }}">{{ (log.purpose or 'general').capitalize() }}</span></td>
+          <td><span class="badge badge-{{ log.scan_result }}">{{ log.scan_result }}</span></td>
+          <td style="font-size:0.78rem;color:#6b7280">{{ log.scanned_at.strftime('%d/%m/%Y %H:%M') if log.scanned_at else '—' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" style="text-align:center;padding:30px;color:#9ca3af">No scans yet. <a href="{{ url_for('staff.scanner') }}" style="color:#0d1a5e;font-weight:700">Open the scanner</a> to begin.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

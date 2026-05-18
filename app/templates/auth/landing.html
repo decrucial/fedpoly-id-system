@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FedPoly Nasarawa — Student ID Card & QR Verification System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nunito:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy: #0d1a5e; --navy-light: #1a2870; --navy-dark: #080f3a;
+      --gold: #f9a825; --gold-light: #ffd54f; --red: #c62828;
+      --white: #ffffff; --text-muted: rgba(255,255,255,0.7);
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Nunito', sans-serif; background: var(--navy-dark); color: #fff; overflow-x: hidden; }
+
+    /* ===== NAVBAR ===== */
+    .navbar {
+      position: fixed; top: 0; width: 100%; z-index: 1000;
+      padding: 0 40px;
+      background: rgba(8,15,58,0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(249,168,37,0.2);
+      display: flex; align-items: center; justify-content: space-between;
+      height: 70px;
+    }
+    .nav-brand { display: flex; align-items: center; gap: 12px; }
+    .nav-logo {
+      width: 44px; height: 44px; border-radius: 50%;
+      border: 2px solid var(--gold); object-fit: cover;
+    }
+    .nav-brand-text .name {
+      font-family: 'Cinzel', serif; font-size: 1rem;
+      font-weight: 700; color: var(--gold); display: block; line-height: 1.2;
+    }
+    .nav-brand-text .sub { font-size: 0.65rem; color: var(--text-muted); letter-spacing: 1px; }
+    .nav-links { display: flex; align-items: center; gap: 8px; }
+    .nav-links a {
+      color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.875rem;
+      font-weight: 600; padding: 8px 16px; border-radius: 8px; transition: all 0.2s;
+    }
+    .nav-links a:hover { color: var(--gold); background: rgba(249,168,37,0.1); }
+    .nav-btn {
+      background: var(--gold) !important; color: var(--navy-dark) !important;
+      border-radius: 10px !important; font-weight: 800 !important;
+    }
+    .nav-btn:hover { background: var(--gold-light) !important; transform: translateY(-1px); }
+
+    /* ===== HERO ===== */
+    .hero {
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 50%, #1a237e 100%);
+      display: flex; align-items: center; justify-content: center;
+      position: relative; overflow: hidden; padding: 100px 40px 60px;
+    }
+
+    /* Animated background circles */
+    .hero-bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+    .hero-circle {
+      position: absolute; border-radius: 50%;
+      background: radial-gradient(circle, rgba(249,168,37,0.08) 0%, transparent 70%);
+      animation: pulse-slow 8s ease-in-out infinite;
+    }
+    .hero-circle:nth-child(1) { width: 600px; height: 600px; top: -200px; right: -100px; animation-delay: 0s; }
+    .hero-circle:nth-child(2) { width: 400px; height: 400px; bottom: -100px; left: -100px; animation-delay: 2s; }
+    .hero-circle:nth-child(3) { width: 300px; height: 300px; top: 40%; left: 30%; animation-delay: 4s; }
+    @keyframes pulse-slow {
+      0%, 100% { transform: scale(1); opacity: 0.6; }
+      50% { transform: scale(1.15); opacity: 1; }
+    }
+
+    /* Gold particles */
+    .particles { position: absolute; inset: 0; pointer-events: none; }
+    .particle {
+      position: absolute; width: 3px; height: 3px;
+      background: var(--gold); border-radius: 50%; opacity: 0;
+      animation: float-up linear infinite;
+    }
+    @keyframes float-up {
+      0% { opacity: 0; transform: translateY(0) scale(0); }
+      10% { opacity: 0.8; transform: translateY(-20px) scale(1); }
+      90% { opacity: 0.3; }
+      100% { opacity: 0; transform: translateY(-200px) scale(0.5); }
+    }
+
+    /* Grid lines overlay */
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(249,168,37,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(249,168,37,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative; z-index: 2;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 60px; align-items: center; max-width: 1200px; width: 100%;
+    }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(249,168,37,0.15); border: 1px solid rgba(249,168,37,0.3);
+      padding: 6px 16px; border-radius: 50px; font-size: 0.78rem;
+      font-weight: 700; color: var(--gold); letter-spacing: 0.5px;
+      text-transform: uppercase; margin-bottom: 20px;
+    }
+    .hero-badge i { font-size: 0.7rem; }
+
+    .hero-title {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 700; line-height: 1.2;
+      color: #fff; margin-bottom: 16px;
+    }
+    .hero-title .gold { color: var(--gold); }
+    .hero-title .line { display: block; }
+
+    .hero-subtitle {
+      font-size: 1rem; color: var(--text-muted);
+      line-height: 1.7; margin-bottom: 32px; max-width: 480px;
+    }
+
+    .hero-buttons { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 40px; }
+    .hero-btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 14px 28px; border-radius: 12px;
+      font-size: 0.95rem; font-weight: 800; text-decoration: none;
+      transition: all 0.25s; font-family: 'Nunito', sans-serif;
+    }
+    .hero-btn-primary { background: var(--gold); color: var(--navy-dark); }
+    .hero-btn-primary:hover { background: var(--gold-light); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(249,168,37,0.4); }
+    .hero-btn-outline {
+      background: transparent; color: #fff;
+      border: 2px solid rgba(255,255,255,0.3);
+    }
+    .hero-btn-outline:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-2px); }
+
+    .hero-stats {
+      display: flex; gap: 32px;
+    }
+    .hero-stat { }
+    .hero-stat-num {
+      font-size: 1.8rem; font-weight: 900; color: var(--gold);
+      line-height: 1; display: block;
+    }
+    .hero-stat-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
+
+    /* ===== HERO RIGHT — ID CARD MOCKUP ===== */
+    .hero-visual {
+      position: relative; display: flex;
+      align-items: center; justify-content: center;
+    }
+    .card-mockup {
+      background: linear-gradient(135deg, #080f3a, #0d1a5e, #1a237e);
+      border-radius: 20px; padding: 24px;
+      width: 360px; max-width: 100%;
+      border: 1px solid rgba(249,168,37,0.3);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
+      animation: float-card 6s ease-in-out infinite;
+      position: relative; overflow: hidden;
+    }
+    @keyframes float-card {
+      0%, 100% { transform: translateY(0) rotateY(-3deg); }
+      50% { transform: translateY(-16px) rotateY(3deg); }
+    }
+    .card-mockup::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 4px;
+      background: linear-gradient(90deg, var(--red), var(--gold), var(--red));
+    }
+    .mockup-header {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+      padding-bottom: 16px; border-bottom: 1px solid rgba(249,168,37,0.2);
+    }
+    .mockup-logo {
+      width: 48px; height: 48px; border-radius: 50%;
+      border: 2px solid var(--gold); object-fit: cover;
+    }
+    .mockup-school-name {
+      font-family: 'Cinzel', serif; font-size: 0.72rem;
+      color: var(--gold); font-weight: 700; line-height: 1.4;
+    }
+    .mockup-body { display: flex; gap: 16px; align-items: flex-start; }
+    .mockup-photo {
+      width: 80px; height: 90px; border-radius: 10px;
+      background: linear-gradient(135deg, #1a2870, #3949ab);
+      border: 2px solid var(--gold); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; color: var(--gold);
+    }
+    .mockup-info { flex: 1; }
+    .mockup-name {
+      font-size: 0.9rem; font-weight: 800; color: #fff;
+      margin-bottom: 8px; line-height: 1.2;
+    }
+    .mockup-field { margin-bottom: 5px; }
+    .mockup-field-label { font-size: 0.6rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; }
+    .mockup-field-value { font-size: 0.75rem; color: #fff; font-weight: 700; }
+    .mockup-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 16px; padding-top: 14px;
+      border-top: 1px solid rgba(249,168,37,0.2);
+    }
+    .mockup-qr {
+      width: 70px; height: 70px;
+      background: #fff; border-radius: 8px;
+      padding: 6px; display: flex; align-items: center; justify-content: center;
+    }
+    .mockup-qr-inner {
+      width: 100%; height: 100%;
+      background: repeating-linear-gradient(
+        0deg, #0d1a5e 0px, #0d1a5e 3px, white 3px, white 6px
+      ),
+      repeating-linear-gradient(
+        90deg, #0d1a5e 0px, #0d1a5e 3px, white 3px, white 6px
+      );
+      background-blend-mode: multiply;
+    }
+    .mockup-valid {
+      display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+    }
+    .mockup-valid-badge {
+      background: #2e7d32; color: #fff;
+      font-size: 0.65rem; font-weight: 800; padding: 3px 10px;
+      border-radius: 20px; letter-spacing: 0.5px;
+    }
+    .mockup-scan-text { font-size: 0.6rem; color: rgba(255,255,255,0.5); }
+
+    /* Floating scan indicator */
+    .scan-indicator {
+      position: absolute; top: -12px; right: -12px;
+      background: var(--gold); color: var(--navy-dark);
+      border-radius: 50%; width: 48px; height: 48px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; box-shadow: 0 4px 20px rgba(249,168,37,0.5);
+      animation: spin-slow 4s linear infinite;
+    }
+    @keyframes spin-slow {
+      0% { transform: rotate(0deg) scale(1); }
+      50% { transform: rotate(180deg) scale(1.1); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+    .verified-pill {
+      position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%);
+      background: #2e7d32; color: #fff;
+      padding: 8px 20px; border-radius: 30px;
+      font-size: 0.8rem; font-weight: 800;
+      display: flex; align-items: center; gap: 6px;
+      box-shadow: 0 4px 20px rgba(46,125,50,0.4);
+      white-space: nowrap;
+    }
+
+    /* ===== FEATURES SECTION ===== */
+    .section { padding: 80px 40px; }
+    .section-header { text-align: center; margin-bottom: 56px; }
+    .section-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(249,168,37,0.12); border: 1px solid rgba(249,168,37,0.25);
+      color: var(--gold); padding: 5px 14px; border-radius: 50px;
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.8px;
+      text-transform: uppercase; margin-bottom: 14px;
+    }
+    .section-title {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.5rem, 3vw, 2.2rem);
+      font-weight: 700; color: #fff; margin-bottom: 14px;
+    }
+    .section-title .gold { color: var(--gold); }
+    .section-desc { font-size: 1rem; color: var(--text-muted); max-width: 560px; margin: 0 auto; line-height: 1.7; }
+
+    .features-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px; max-width: 1200px; margin: 0 auto;
+    }
+    .feature-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px; padding: 28px;
+      transition: all 0.3s; position: relative; overflow: hidden;
+    }
+    .feature-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .feature-card:hover { transform: translateY(-4px); background: rgba(255,255,255,0.07); border-color: rgba(249,168,37,0.2); }
+    .feature-card:hover::before { opacity: 1; }
+    .feature-icon {
+      width: 56px; height: 56px; border-radius: 14px;
+      background: linear-gradient(135deg, rgba(249,168,37,0.15), rgba(249,168,37,0.05));
+      border: 1px solid rgba(249,168,37,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; color: var(--gold); margin-bottom: 18px;
+    }
+    .feature-title { font-size: 1rem; font-weight: 800; color: #fff; margin-bottom: 10px; }
+    .feature-desc { font-size: 0.875rem; color: var(--text-muted); line-height: 1.7; }
+
+    /* ===== HOW IT WORKS ===== */
+    .how-section {
+      background: rgba(255,255,255,0.02);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .steps-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0; max-width: 1000px; margin: 0 auto; position: relative;
+    }
+    .step {
+      text-align: center; padding: 24px 20px; position: relative;
+    }
+    .step:not(:last-child)::after {
+      content: '→';
+      position: absolute; right: -10px; top: 50%; transform: translateY(-50%);
+      font-size: 1.5rem; color: var(--gold); opacity: 0.4;
+    }
+    .step-num {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold), #e65100);
+      color: var(--navy-dark); font-size: 1.2rem; font-weight: 900;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 14px;
+      box-shadow: 0 4px 20px rgba(249,168,37,0.3);
+    }
+    .step-title { font-size: 0.9rem; font-weight: 800; color: #fff; margin-bottom: 6px; }
+    .step-desc { font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; }
+
+    /* ===== ROLES SECTION ===== */
+    .roles-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px; max-width: 1000px; margin: 0 auto;
+    }
+    .role-card {
+      border-radius: 16px; padding: 32px; text-align: center;
+      border: 1px solid rgba(255,255,255,0.1); transition: all 0.3s;
+      position: relative; overflow: hidden;
+    }
+    .role-card-admin { background: linear-gradient(135deg, rgba(198,40,40,0.15), rgba(198,40,40,0.05)); border-color: rgba(198,40,40,0.3); }
+    .role-card-staff { background: linear-gradient(135deg, rgba(21,101,192,0.15), rgba(21,101,192,0.05)); border-color: rgba(21,101,192,0.3); }
+    .role-card-student { background: linear-gradient(135deg, rgba(46,125,50,0.15), rgba(46,125,50,0.05)); border-color: rgba(46,125,50,0.3); }
+    .role-card:hover { transform: translateY(-4px); }
+    .role-icon {
+      width: 70px; height: 70px; border-radius: 50%; margin: 0 auto 16px;
+      display: flex; align-items: center; justify-content: center; font-size: 1.8rem;
+    }
+    .role-card-admin .role-icon { background: rgba(198,40,40,0.2); color: #ef9a9a; }
+    .role-card-staff .role-icon { background: rgba(21,101,192,0.2); color: #90caf9; }
+    .role-card-student .role-icon { background: rgba(46,125,50,0.2); color: #a5d6a7; }
+    .role-title { font-size: 1.1rem; font-weight: 800; color: #fff; margin-bottom: 10px; }
+    .role-desc { font-size: 0.83rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 18px; }
+    .role-perms { list-style: none; text-align: left; }
+    .role-perms li {
+      font-size: 0.8rem; color: rgba(255,255,255,0.75);
+      padding: 5px 0; display: flex; align-items: center; gap: 8px;
+    }
+    .role-perms li i { color: var(--gold); font-size: 0.7rem; }
+
+    /* ===== CTA ===== */
+    .cta-section {
+      background: linear-gradient(135deg, var(--navy), #1a237e, var(--navy-dark));
+      text-align: center; padding: 80px 40px;
+      border-top: 1px solid rgba(249,168,37,0.15);
+      position: relative; overflow: hidden;
+    }
+    .cta-section::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at center, rgba(249,168,37,0.08) 0%, transparent 70%);
+    }
+    .cta-title {
+      font-family: 'Cinzel', serif; font-size: clamp(1.5rem, 3vw, 2.2rem);
+      font-weight: 700; color: #fff; margin-bottom: 14px;
+      position: relative;
+    }
+    .cta-title .gold { color: var(--gold); }
+    .cta-desc { font-size: 1rem; color: var(--text-muted); margin-bottom: 32px; max-width: 480px; margin-left: auto; margin-right: auto; }
+
+    /* ===== FOOTER ===== */
+    .footer {
+      background: #040a2a; padding: 32px 40px;
+      border-top: 1px solid rgba(249,168,37,0.1);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 16px;
+    }
+    .footer-left { display: flex; align-items: center; gap: 12px; }
+    .footer-logo { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--gold); object-fit: cover; }
+    .footer-school { font-family: 'Cinzel', serif; font-size: 0.8rem; color: var(--gold); font-weight: 700; }
+    .footer-dept { font-size: 0.7rem; color: rgba(255,255,255,0.4); }
+    .footer-right { font-size: 0.75rem; color: rgba(255,255,255,0.4); text-align: right; }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 900px) {
+      .hero-content { grid-template-columns: 1fr; text-align: center; gap: 40px; }
+      .hero-subtitle { margin: 0 auto 32px; }
+      .hero-buttons { justify-content: center; }
+      .hero-stats { justify-content: center; }
+      .hero-visual { order: -1; }
+      .card-mockup { width: 300px; }
+      .step:not(:last-child)::after { display: none; }
+      .navbar { padding: 0 20px; }
+      .section { padding: 60px 20px; }
+    }
+    @media (max-width: 600px) {
+      .nav-links .nav-link-hide { display: none; }
+      .hero { padding: 90px 20px 50px; }
+      .hero-stats { gap: 20px; }
+      .card-mockup { width: 280px; }
+      .footer { flex-direction: column; text-align: center; }
+      .footer-right { text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-brand">
+    <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="FedPoly Logo" class="nav-logo"/>
+    <div class="nav-brand-text">
+      <span class="name">FedPoly Nasarawa</span>
+      <span class="sub">ID VERIFICATION SYSTEM</span>
+    </div>
+  </div>
+  <div class="nav-links">
+    <a href="#features" class="nav-link-hide">Features</a>
+    <a href="#how-it-works" class="nav-link-hide">How It Works</a>
+    <a href="#roles" class="nav-link-hide">Roles</a>
+    <a href="{{ url_for('auth.login') }}" class="nav-btn">
+      <i class="fas fa-sign-in-alt"></i> Login
+    </a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg">
+    <div class="hero-circle"></div>
+    <div class="hero-circle"></div>
+    <div class="hero-circle"></div>
+  </div>
+
+  <!-- Particles -->
+  <div class="particles" id="particles"></div>
+
+  <div class="hero-content">
+    <div class="hero-text">
+      <div class="hero-badge">
+        <i class="fas fa-shield-alt"></i>
+        Secure · Digital · Verified
+      </div>
+      <h1 class="hero-title">
+        <span class="line">Student ID Card</span>
+        <span class="line"><span class="gold">Generation</span> &</span>
+        <span class="line">QR Verification</span>
+        <span class="line">System</span>
+      </h1>
+      <p class="hero-subtitle">
+        A web-based platform for <strong style="color:#fff">The Federal Polytechnic Nasarawa</strong>,
+        Department of Computer Science — generating encrypted QR-coded student ID cards,
+        scannable online and on printed cards for instant identity verification.
+      </p>
+      <div class="hero-buttons">
+        <a href="{{ url_for('auth.login') }}" class="hero-btn hero-btn-primary">
+          <i class="fas fa-sign-in-alt"></i> Access Portal
+        </a>
+        <a href="#how-it-works" class="hero-btn hero-btn-outline">
+          <i class="fas fa-play-circle"></i> See How It Works
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <span class="hero-stat-num">QR</span>
+          <span class="hero-stat-label">Encrypted Codes</span>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-num">PDF</span>
+          <span class="hero-stat-label">& PNG Download</span>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-num">∞</span>
+          <span class="hero-stat-label">Any QR Scanner</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ID Card Mockup -->
+    <div class="hero-visual">
+      <div class="card-mockup">
+        <div class="mockup-header">
+          <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="Logo" class="mockup-logo"/>
+          <div class="mockup-school-name">
+            THE FEDERAL POLYTECHNIC NASARAWA<br/>
+            <span style="font-size:0.6rem; color:rgba(255,255,255,0.5)">School of Information Technology</span>
+          </div>
+        </div>
+        <div class="mockup-body">
+          <div class="mockup-photo"><i class="fas fa-user"></i></div>
+          <div class="mockup-info">
+            <div class="mockup-name">SAMPLE STUDENT<br/>FULL NAME</div>
+            <div class="mockup-field">
+              <div class="mockup-field-label">Matric Number</div>
+              <div class="mockup-field-value">CSC/2024/001</div>
+            </div>
+            <div class="mockup-field">
+              <div class="mockup-field-label">Department</div>
+              <div class="mockup-field-value">Computer Science</div>
+            </div>
+            <div class="mockup-field">
+              <div class="mockup-field-label">Level / Session</div>
+              <div class="mockup-field-value">HND 2 · 2024/2025</div>
+            </div>
+          </div>
+        </div>
+        <div class="mockup-footer">
+          <div class="mockup-qr">
+            <div class="mockup-qr-inner"></div>
+          </div>
+          <div class="mockup-valid">
+            <div class="mockup-valid-badge">✓ ACTIVE</div>
+            <div class="mockup-scan-text">Scan QR to verify</div>
+            <div class="mockup-scan-text">Valid Until: Aug 2025</div>
+          </div>
+        </div>
+      </div>
+      <div class="scan-indicator"><i class="fas fa-qrcode"></i></div>
+      <div class="verified-pill"><i class="fas fa-check-circle"></i> Identity Verified</div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section" id="features">
+  <div class="section-header">
+    <div class="section-badge"><i class="fas fa-star"></i> Key Features</div>
+    <h2 class="section-title">Everything You Need for<br/><span class="gold">Secure ID Management</span></h2>
+    <p class="section-desc">A complete digital identity solution built specifically for Federal Polytechnic Nasarawa.</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon"><i class="fas fa-id-card"></i></div>
+      <div class="feature-title">Beautiful ID Card Generation</div>
+      <div class="feature-desc">Auto-generate professionally designed student ID cards with photo, department details, and embedded QR code. Download as PDF or PNG and print anywhere.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><i class="fas fa-qrcode"></i></div>
+      <div class="feature-title">Encrypted QR Codes</div>
+      <div class="feature-desc">Every student gets a unique AES-encrypted QR code. The QR contains a secure verification link — impossible to forge or duplicate.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><i class="fas fa-camera"></i></div>
+      <div class="feature-title">Scan with Any Phone</div>
+      <div class="feature-desc">No special scanner needed. Any phone camera, Google Lens, or QR app instantly opens the student's verified profile. Works on printed cards and phone screens.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><i class="fas fa-globe"></i></div>
+      <div class="feature-title">Online & Offline Scanning</div>
+      <div class="feature-desc">Scan via the web portal scanner or scan the physical printed card with any QR app — both show the student's full profile and verification status instantly.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+      <div class="feature-title">Role-Based Security</div>
+      <div class="feature-desc">Three separate roles — Admin, Staff, and Student — each with strictly defined access. Brute-force protection, account lockout, and secure session management.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><i class="fas fa-file-alt"></i></div>
+      <div class="feature-title">Comprehensive Reports</div>
+      <div class="feature-desc">Admin can generate and print detailed PDF reports — student lists, scan logs, individual profiles, and statistics — all with the school's official branding.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><i class="fas fa-history"></i></div>
+      <div class="feature-title">Full Audit Logs</div>
+      <div class="feature-desc">Every scan is automatically logged with timestamp, purpose, location, and scanner identity. Full accountability and traceability for every verification event.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><i class="fas fa-download"></i></div>
+      <div class="feature-title">PDF & PNG Download</div>
+      <div class="feature-desc">Students can download their ID card in both PDF format (for printing) and PNG image format (for digital use). Admin can also download cards for any student.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><i class="fas fa-sync-alt"></i></div>
+      <div class="feature-title">QR Regeneration</div>
+      <div class="feature-desc">If a card is lost or compromised, admin can instantly regenerate a new QR code — the old one is immediately invalidated, ensuring continued security.</div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section how-section" id="how-it-works">
+  <div class="section-header">
+    <div class="section-badge"><i class="fas fa-route"></i> Process Flow</div>
+    <h2 class="section-title">How It <span class="gold">Works</span></h2>
+    <p class="section-desc">From registration to verification — the entire process in 5 simple steps.</p>
+  </div>
+  <div class="steps-grid">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-title">Admin Registers Student</div>
+      <div class="step-desc">Admin fills student details and uploads a passport photo in the secure portal.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-title">QR Code Generated</div>
+      <div class="step-desc">System creates a unique encrypted QR code linked to the student's profile.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-title">Student Downloads ID Card</div>
+      <div class="step-desc">Student logs in and downloads their ID card as PDF or PNG, then prints it.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-title">Staff or Anyone Scans QR</div>
+      <div class="step-desc">Any phone camera scans the QR code on the printed card — no special app needed.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-title">Identity Verified Instantly</div>
+      <div class="step-desc">Student's full profile, photo, and verification status appear on the screen in seconds.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ROLES -->
+<section class="section" id="roles">
+  <div class="section-header">
+    <div class="section-badge"><i class="fas fa-users"></i> System Roles</div>
+    <h2 class="section-title">Three <span class="gold">Roles</span>, One System</h2>
+    <p class="section-desc">Every user has exactly the access they need — nothing more, nothing less.</p>
+  </div>
+  <div class="roles-grid">
+    <div class="role-card role-card-admin">
+      <div class="role-icon"><i class="fas fa-user-shield"></i></div>
+      <div class="role-title">Administrator</div>
+      <div class="role-desc">Full control over the entire system. Manages students, staff, and generates all reports.</div>
+      <ul class="role-perms">
+        <li><i class="fas fa-check"></i> Register & manage students</li>
+        <li><i class="fas fa-check"></i> Generate & regenerate QR codes</li>
+        <li><i class="fas fa-check"></i> Download ID cards for any student</li>
+        <li><i class="fas fa-check"></i> Manage staff accounts</li>
+        <li><i class="fas fa-check"></i> View all scan logs</li>
+        <li><i class="fas fa-check"></i> Generate & print all reports</li>
+        <li><i class="fas fa-check"></i> Suspend / reactivate accounts</li>
+      </ul>
+    </div>
+    <div class="role-card role-card-staff">
+      <div class="role-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+      <div class="role-title">Staff / Examiner</div>
+      <div class="role-desc">Scan and verify student ID cards at exams, events, or gate entry. Read-only verification access.</div>
+      <ul class="role-perms">
+        <li><i class="fas fa-check"></i> Open web-based QR scanner</li>
+        <li><i class="fas fa-check"></i> Scan & verify student identity</li>
+        <li><i class="fas fa-check"></i> View student profile on scan</li>
+        <li><i class="fas fa-check"></i> View personal scan history</li>
+        <li><i class="fas fa-check"></i> Change own password</li>
+      </ul>
+    </div>
+    <div class="role-card role-card-student">
+      <div class="role-icon"><i class="fas fa-user-graduate"></i></div>
+      <div class="role-title">Student</div>
+      <div class="role-desc">Access personal profile and download ID card in PDF and PNG formats for printing.</div>
+      <ul class="role-perms">
+        <li><i class="fas fa-check"></i> View personal profile</li>
+        <li><i class="fas fa-check"></i> Preview ID card on screen</li>
+        <li><i class="fas fa-check"></i> Download ID card as PDF</li>
+        <li><i class="fas fa-check"></i> Download ID card as PNG</li>
+        <li><i class="fas fa-check"></i> View scan history</li>
+        <li><i class="fas fa-check"></i> Change own password</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <h2 class="cta-title">Ready to Get <span class="gold">Started?</span></h2>
+  <p class="cta-desc">Log in to the portal to register students, generate ID cards, or verify student identity.</p>
+  <a href="{{ url_for('auth.login') }}" class="hero-btn hero-btn-primary" style="display:inline-flex;">
+    <i class="fas fa-sign-in-alt"></i> Access the Portal
+  </a>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-left">
+    <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="Logo" class="footer-logo"/>
+    <div>
+      <div class="footer-school">The Federal Polytechnic Nasarawa</div>
+      <div class="footer-dept">Department of Computer Science · School of Information Technology</div>
+    </div>
+  </div>
+  <div class="footer-right">
+    <div>Student ID Card Generation & QR Verification System</div>
+    <div style="margin-top:4px">HND Final Year Project · 2024/2025 Academic Session</div>
+  </div>
+</footer>
+
+<script>
+  // Generate floating particles
+  const container = document.getElementById('particles');
+  for (let i = 0; i < 30; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.top = Math.random() * 100 + '%';
+    p.style.animationDuration = (6 + Math.random() * 10) + 's';
+    p.style.animationDelay = (Math.random() * 8) + 's';
+    p.style.width = p.style.height = (2 + Math.random() * 3) + 'px';
+    container.appendChild(p);
+  }
+
+  // Smooth scroll for anchor links
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) target.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+</script>
+</body>
+</html>

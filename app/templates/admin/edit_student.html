@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Edit Student{% endblock %}
+{% block page_title %}Edit Student{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-edit"></i> Edit Student — {{ student.full_name }}</h1>
+  <a href="{{ url_for('admin.view_student', student_id=student.id) }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
+</div>
+<div class="card">
+  <form method="POST" enctype="multipart/form-data">
+    <div style="display:grid;grid-template-columns:1fr 220px;gap:28px;align-items:start">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Full Name <span class="required">*</span></label>
+          <input type="text" name="full_name" class="form-control" value="{{ student.full_name }}" required/>
+        </div>
+        <div class="form-group">
+          <label>Matric Number</label>
+          <input type="text" class="form-control" value="{{ student.matric_number }}" disabled style="opacity:0.6"/>
+        </div>
+        <div class="form-group">
+          <label>Department</label>
+          <input type="text" name="department" class="form-control" value="{{ student.department }}"/>
+        </div>
+        <div class="form-group">
+          <label>School</label>
+          <input type="text" name="school" class="form-control" value="{{ student.school }}"/>
+        </div>
+        <div class="form-group">
+          <label>Level</label>
+          <select name="level" class="form-control">
+            {% for lv in ['ND 1','ND 2','HND 1','HND 2'] %}
+            <option value="{{ lv }}" {% if student.level == lv %}selected{% endif %}>{{ lv }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Academic Session</label>
+          <input type="text" name="academic_session" class="form-control" value="{{ student.academic_session }}"/>
+        </div>
+        <div class="form-group">
+          <label>Gender</label>
+          <select name="gender" class="form-control">
+            <option value="">—</option>
+            <option value="Male" {% if student.gender == 'Male' %}selected{% endif %}>Male</option>
+            <option value="Female" {% if student.gender == 'Female' %}selected{% endif %}>Female</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="text" name="phone" class="form-control" value="{{ student.phone or '' }}"/>
+        </div>
+        <div class="form-group">
+          <label>Card Expiry</label>
+          <input type="date" name="card_expiry" class="form-control" value="{{ student.card_expiry.strftime('%Y-%m-%d') if student.card_expiry else '' }}"/>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:0.78rem;font-weight:700;color:#0d1a5e;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:10px">Update Photo</label>
+        {% if student.photo_filename %}
+        <img src="{{ url_for('static', filename='photos/' + student.photo_filename) }}" id="photo-preview" class="photo-preview" style="display:block;margin-bottom:10px"/>
+        {% else %}
+        <img id="photo-preview" class="photo-preview" src="" style="display:none;margin-bottom:10px"/>
+        {% endif %}
+        <div class="photo-upload-area" onclick="document.getElementById('photo-input').click()">
+          <i class="fas fa-camera" style="font-size:1.5rem;color:#0d1a5e;opacity:0.3;display:block;margin-bottom:6px"></i>
+          <p style="font-size:0.78rem;color:#6b7280;font-weight:600">Click to change photo</p>
+          <input type="file" id="photo-input" name="photo" accept="image/*" style="display:none"/>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:24px;padding-top:20px;border-top:2px solid #f0f2f8;display:flex;gap:12px">
+      <button type="submit" class="btn btn-primary btn-lg"><i class="fas fa-save"></i> Save Changes</button>
+      <a href="{{ url_for('admin.view_student', student_id=student.id) }}" class="btn btn-outline btn-lg">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}Scan Logs{% endblock %}
+{% block page_title %}Scan Logs{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-history"></i> All Scan Logs</h1>
+  <a href="{{ url_for('admin.report_scan_logs_pdf') }}" class="btn btn-primary" target="_blank"><i class="fas fa-file-pdf"></i> Export PDF</a>
+</div>
+<div class="card mb-2">
+  <form method="GET" class="flex flex-wrap gap-2 items-center">
+    <select name="purpose" class="form-control" style="width:140px">
+      <option value="">All Purposes</option>
+      <option value="exam" {% if purpose=='exam' %}selected{% endif %}>Exam</option>
+      <option value="event" {% if purpose=='event' %}selected{% endif %}>Event</option>
+      <option value="gate" {% if purpose=='gate' %}selected{% endif %}>Gate</option>
+      <option value="general" {% if purpose=='general' %}selected{% endif %}>General</option>
+    </select>
+    <select name="result" class="form-control" style="width:140px">
+      <option value="">All Results</option>
+      <option value="active" {% if result=='active' %}selected{% endif %}>Valid</option>
+      <option value="invalid" {% if result=='invalid' %}selected{% endif %}>Invalid</option>
+      <option value="suspended" {% if result=='suspended' %}selected{% endif %}>Suspended</option>
+    </select>
+    <input type="date" name="date_from" class="form-control" value="{{ date_from }}" style="width:160px"/>
+    <input type="date" name="date_to" class="form-control" value="{{ date_to }}" style="width:160px"/>
+    <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filter</button>
+    <a href="{{ url_for('admin.scan_logs') }}" class="btn btn-outline">Reset</a>
+  </form>
+</div>
+<div class="card">
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Student Name</th><th>Matric No.</th><th>Scanned By</th><th>Purpose</th><th>Location</th><th>Result</th><th>Date & Time</th></tr>
+      </thead>
+      <tbody>
+        {% for log in logs.items %}
+        <tr>
+          <td style="color:#9ca3af;font-size:0.8rem">{{ loop.index }}</td>
+          <td style="font-weight:700;font-size:0.85rem">
+            {% if log.student %}<a href="{{ url_for('admin.view_student', student_id=log.student.id) }}" style="color:#0d1a5e;text-decoration:none">{{ log.student.full_name }}</a>{% else %}Unknown{% endif %}
+          </td>
+          <td style="font-family:monospace;font-size:0.8rem">{{ log.student.matric_number if log.student else '—' }}</td>
+          <td style="font-size:0.82rem">{{ log.scanned_by_user.username if log.scanned_by_user else 'Public Scan' }}</td>
+          <td><span class="badge badge-{{ log.purpose or 'general' }}">{{ (log.purpose or 'general').capitalize() }}</span></td>
+          <td style="font-size:0.8rem;color:#6b7280">{{ log.location or '—' }}</td>
+          <td><span class="badge badge-{{ log.scan_result }}">{{ log.scan_result }}</span></td>
+          <td style="font-size:0.75rem;color:#6b7280;white-space:nowrap">{{ log.scanned_at.strftime('%d/%m/%Y %H:%M') if log.scanned_at else '—' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="text-align:center;padding:40px;color:#9ca3af">No scan logs yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <!-- Pagination -->
+  {% if logs.pages > 1 %}
+  <div class="pagination">
+    {% if logs.has_prev %}<a href="{{ url_for('admin.scan_logs', page=logs.prev_num) }}">‹</a>{% endif %}
+    {% for p in logs.iter_pages() %}
+      {% if p %}
+        {% if p == logs.page %}<span class="current">{{ p }}</span>
+        {% else %}<a href="{{ url_for('admin.scan_logs', page=p) }}">{{ p }}</a>{% endif %}
+      {% else %}<span>…</span>{% endif %}
+    {% endfor %}
+    {% if logs.has_next %}<a href="{{ url_for('admin.scan_logs', page=logs.next_num) }}">›</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

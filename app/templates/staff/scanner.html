@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% block title %}QR Scanner{% endblock %}
+{% block page_title %}QR Code Scanner{% endblock %}
+{% block extra_css %}
+<style>
+  #qr-reader { border-radius: 12px; overflow: hidden; border: 3px solid #f9a825; }
+  #qr-reader video { border-radius: 10px; }
+  .scan-result-box {
+    border-radius: 14px; padding: 20px; margin-top: 20px;
+    animation: fadeIn 0.4s ease;
+  }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  .scan-valid { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); border: 2px solid #2e7d32; }
+  .scan-invalid { background: linear-gradient(135deg, #ffebee, #ffcdd2); border: 2px solid #c62828; }
+  .scan-suspended { background: linear-gradient(135deg, #fff8e1, #ffe082); border: 2px solid #f9a825; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-camera"></i> QR Code Scanner</h1>
+  <a href="{{ url_for('staff.dashboard') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Dashboard</a>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start">
+  <!-- Scanner -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fas fa-qrcode"></i> Point Camera at QR Code</div>
+    </div>
+    <div id="qr-reader" style="width:100%"></div>
+    <div class="form-group mt-2">
+      <label>Scan Purpose</label>
+      <select id="scan-purpose" class="form-control">
+        <option value="general">General Verification</option>
+        <option value="exam">Exam Verification</option>
+        <option value="event">Event Verification</option>
+        <option value="gate">Gate Entry</option>
+      </select>
+    </div>
+    <p style="font-size:0.8rem;color:#9ca3af;text-align:center;margin-top:12px">
+      <i class="fas fa-info-circle"></i> Allow camera access when prompted. Works with printed cards or phone screens.
+    </p>
+    <div style="margin-top:14px;text-align:center">
+      <button id="stop-btn" class="btn btn-danger" style="display:none" onclick="stopScanner()"><i class="fas fa-stop"></i> Stop Scanner</button>
+    </div>
+  </div>
+
+  <!-- Result Panel -->
+  <div>
+    <div class="card" id="waiting-panel">
+      <div style="text-align:center;padding:40px 20px">
+        <i class="fas fa-qrcode" style="font-size:4rem;color:#0d1a5e;opacity:0.15;display:block;margin-bottom:14px"></i>
+        <p style="color:#9ca3af;font-weight:600">Scan a student QR code to see their identity verification result here.</p>
+      </div>
+    </div>
+    <div id="result-panel" style="display:none">
+      <!-- Result injected by JS -->
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+let scanner = null;
+let lastScanned = '';
+
+function startScanner() {
+  scanner = new Html5QrcodeScanner("qr-reader", {
+    fps: 10, qrbox: { width: 280, height: 280 },
+    rememberLastUsedCamera: true,
+  });
+  scanner.render(onScanSuccess, onScanError);
+  document.getElementById('stop-btn').style.display = 'inline-flex';
+}
+
+function stopScanner() {
+  if (scanner) { scanner.clear(); scanner = null; }
+  document.getElementById('stop-btn').style.display = 'none';
+}
+
+function onScanSuccess(decodedText, decodedResult) {
+  if (decodedText === lastScanned) return;
+  lastScanned = decodedText;
+
+  // Extract token from URL if it's a full URL
+  let token = decodedText;
+  const match = decodedText.match(/\/verify\/(.+)$/);
+  if (match) token = match[1];
+
+  const purpose = document.getElementById('scan-purpose').value;
+  
+  // Show loading
+  document.getElementById('waiting-panel').style.display = 'none';
+  document.getElementById('result-panel').style.display = 'block';
+  document.getElementById('result-panel').innerHTML = `
+    <div class="card" style="text-align:center;padding:40px">
+      <i class="fas fa-spinner fa-spin" style="font-size:2rem;color:#0d1a5e"></i>
+      <p style="margin-top:12px;color:#6b7280;font-weight:600">Verifying identity...</p>
+    </div>`;
+
+  // Redirect to verification page with purpose
+  const verifyUrl = `/verify/${token}?purpose=${purpose}`;
+  
+  fetch(verifyUrl)
+    .then(r => r.text())
+    .then(html => {
+      // Open in new tab for full view
+      const win = window.open(verifyUrl, '_blank');
+      showInlineResult(token, purpose);
+    })
+    .catch(err => {
+      document.getElementById('result-panel').innerHTML = `
+        <div class="card scan-result-box scan-invalid">
+          <div style="text-align:center">
+            <i class="fas fa-times-circle" style="font-size:2.5rem;color:#c62828;display:block;margin-bottom:10px"></i>
+            <div style="font-size:1rem;font-weight:800;color:#c62828">VERIFICATION FAILED</div>
+            <p style="font-size:0.83rem;color:#b71c1c;margin-top:8px">Could not reach the server. Check internet connection.</p>
+          </div>
+        </div>`;
+    });
+
+  // Reset after 8 seconds to allow rescanning
+  setTimeout(() => { lastScanned = ''; }, 8000);
+}
+
+function showInlineResult(token, purpose) {
+  fetch(`/verify/${token}?purpose=${purpose}&json=1`)
+    .then(r => r.json())
+    .then(data => {
+      const isValid = data.result === 'active';
+      const isSuspended = data.result === 'suspended';
+      const cls = isValid ? 'scan-valid' : (isSuspended ? 'scan-suspended' : 'scan-invalid');
+      const icon = isValid ? 'check-circle' : (isSuspended ? 'exclamation-triangle' : 'times-circle');
+      const iconColor = isValid ? '#2e7d32' : (isSuspended ? '#e65100' : '#c62828');
+      const statusText = isValid ? '✅ IDENTITY VERIFIED' : (isSuspended ? '⚠️ ACCOUNT SUSPENDED' : '❌ INVALID QR CODE');
+
+      let photoHtml = data.photo_url
+        ? `<img src="${data.photo_url}" style="width:80px;height:80px;border-radius:10px;object-fit:cover;border:3px solid ${iconColor};margin:0 auto 14px;display:block"/>`
+        : `<div style="width:80px;height:80px;border-radius:10px;background:#f0f2f8;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:2rem;color:#9ca3af"><i class="fas fa-user"></i></div>`;
+
+      let infoHtml = '';
+      if (data.student) {
+        infoHtml = `
+          <div style="text-align:left;margin-top:14px">
+            ${[['Name', data.student.full_name], ['Matric No.', data.student.matric_number],
+               ['Department', data.student.department], ['Level', data.student.level],
+               ['Session', data.student.academic_session]].map(([l, v]) =>
+              `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.07);font-size:0.83rem">
+                <span style="color:#6b7280;font-weight:600">${l}</span>
+                <span style="font-weight:700;color:#1a1a2e">${v}</span>
+              </div>`).join('')}
+          </div>`;
+      }
+
+      document.getElementById('result-panel').innerHTML = `
+        <div class="card scan-result-box ${cls}">
+          ${photoHtml}
+          <div style="text-align:center">
+            <i class="fas fa-${icon}" style="font-size:2rem;color:${iconColor};display:block;margin-bottom:8px"></i>
+            <div style="font-size:1rem;font-weight:900;color:${iconColor}">${statusText}</div>
+          </div>
+          ${infoHtml}
+          <div style="text-align:center;margin-top:14px">
+            <button onclick="lastScanned=''" class="btn btn-primary btn-sm"><i class="fas fa-redo"></i> Scan Another</button>
+          </div>
+        </div>`;
+    })
+    .catch(() => {
+      // Fallback: redirect to verify page
+      window.open(`/verify/${token}?purpose=${purpose}`, '_blank');
+      document.getElementById('result-panel').innerHTML = `
+        <div class="card">
+          <div style="text-align:center;padding:20px">
+            <i class="fas fa-external-link-alt" style="font-size:2rem;color:#0d1a5e;display:block;margin-bottom:10px"></i>
+            <p style="font-weight:700;color:#0d1a5e">Verification opened in a new tab.</p>
+            <button onclick="lastScanned=''" class="btn btn-primary btn-sm mt-2"><i class="fas fa-redo"></i> Scan Another</button>
+          </div>
+        </div>`;
+    });
+}
+
+function onScanError(err) { /* Silent fail */ }
+
+// Auto-start scanner
+window.addEventListener('load', startScanner);
+</script>
+{% endblock %}

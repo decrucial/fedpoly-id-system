@@ -1,0 +1,36 @@
+# Environment & secrets
+.env
+*.env
+
+# Database
+instance/
+*.db
+*.sqlite
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.pyc
+venv/
+env/
+.venv/
+
+# Uploads (don't commit student photos to git)
+app/static/photos/*
+app/static/qrcodes/*
+app/static/idcards/*
+!app/static/photos/.gitkeep
+!app/static/qrcodes/.gitkeep
+!app/static/idcards/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: fedpoly-id-system
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn wsgi:app
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENCRYPTION_KEY
+        generateValue: true
+      - key: BASE_URL
+        value: https://fedpoly-id-system.onrender.com
+      - key: FLASK_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fedpoly-db
+          property: connectionString
+
+databases:
+  - name: fedpoly-db
+    databaseName: fedpoly
+    user: fedpoly

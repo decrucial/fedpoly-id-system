@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% block title %}My ID Card{% endblock %}
+{% block page_title %}My ID Card{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-id-card"></i> My Student ID Card</h1>
+  <a href="{{ url_for('student.dashboard') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Dashboard</a>
+</div>
+
+{% if student.card_status != 'active' %}
+<div class="alert alert-{{ 'danger' if student.card_status == 'suspended' else 'warning' }}">
+  <i class="fas fa-exclamation-triangle"></i>
+  Your ID card is currently <strong>{{ student.card_status.upper() }}</strong>. Contact the admin if this is an error.
+</div>
+{% endif %}
+
+<div class="grid-2" style="gap:24px;align-items:start">
+  <!-- Preview -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fas fa-eye"></i> Card Preview</div>
+    </div>
+    {% if student.qr_filename %}
+    <div class="id-card-preview-container">
+      <!-- Live HTML preview matching the card design -->
+      <div style="background:linear-gradient(135deg,#080f3a,#0d1a5e,#1a237e);border-radius:16px;padding:20px;max-width:400px;margin:0 auto;border:2px solid rgba(249,168,37,0.4);box-shadow:0 12px 40px rgba(0,0,0,0.4)">
+        <!-- Red stripe -->
+        <div style="height:4px;background:linear-gradient(90deg,#c62828,#f9a825,#c62828);border-radius:2px;margin-bottom:14px"></div>
+        <!-- Header -->
+        <div style="display:flex;align-items:center;gap:10px;padding-bottom:14px;border-bottom:1px solid rgba(249,168,37,0.2);margin-bottom:14px">
+          <img src="{{ url_for('static', filename='images/logo.jpg') }}" style="width:44px;height:44px;border-radius:50%;border:2px solid #f9a825;object-fit:cover"/>
+          <div>
+            <div style="font-size:0.72rem;font-weight:800;color:#f9a825;font-family:serif;letter-spacing:0.5px">THE FEDERAL POLYTECHNIC NASARAWA</div>
+            <div style="font-size:0.6rem;color:rgba(255,255,255,0.5)">School of Information Technology</div>
+            <div style="font-size:0.6rem;color:rgba(255,255,255,0.5)">STUDENT IDENTITY CARD</div>
+          </div>
+        </div>
+        <!-- Body -->
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          {% if student.photo_filename %}
+          <img src="{{ url_for('static', filename='photos/' + student.photo_filename) }}" style="width:80px;height:90px;border-radius:8px;object-fit:cover;border:2px solid #f9a825;flex-shrink:0"/>
+          {% else %}
+          <div style="width:80px;height:90px;border-radius:8px;background:rgba(255,255,255,0.1);border:2px solid #f9a825;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.5rem;color:#f9a825"><i class="fas fa-user"></i></div>
+          {% endif %}
+          <div style="flex:1">
+            <div style="font-size:0.9rem;font-weight:800;color:#fff;margin-bottom:8px;line-height:1.2">{{ student.full_name.upper() }}</div>
+            {% for label, value in [('Matric No.', student.matric_number), ('Department', student.department), ('Level', student.level), ('Session', student.academic_session)] %}
+            <div style="margin-bottom:4px">
+              <span style="font-size:0.55rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;display:block">{{ label }}</span>
+              <span style="font-size:0.72rem;color:#fff;font-weight:700">{{ value }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        <!-- Footer with QR -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid rgba(249,168,37,0.2)">
+          <img src="{{ url_for('static', filename='qrcodes/' + student.qr_filename) }}" style="width:70px;height:70px;border-radius:6px;background:#fff;padding:3px"/>
+          <div style="text-align:right">
+            <div style="background:#2e7d32;color:#fff;font-size:0.65rem;font-weight:800;padding:3px 10px;border-radius:20px;margin-bottom:6px">● {{ student.card_status.upper() }}</div>
+            <div style="font-size:0.6rem;color:rgba(255,255,255,0.4)">Scan to verify identity</div>
+            {% if student.card_expiry %}<div style="font-size:0.6rem;color:rgba(255,255,255,0.4)">Valid Until: {{ student.card_expiry.strftime('%B %Y') }}</div>{% endif %}
+          </div>
+        </div>
+        <div style="height:3px;background:#f9a825;border-radius:2px;margin-top:12px"></div>
+      </div>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:40px;color:#9ca3af">
+      <i class="fas fa-exclamation-circle" style="font-size:2rem;display:block;margin-bottom:10px;opacity:0.3"></i>
+      ID card not generated yet. Please contact the administrator.
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Download Options -->
+  <div>
+    <div class="card mb-2">
+      <div class="card-header">
+        <div class="card-title"><i class="fas fa-download"></i> Download Options</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <!-- PDF Download -->
+        <div style="background:#f0f2f8;border-radius:12px;padding:18px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+            <div style="width:44px;height:44px;border-radius:10px;background:#c62828;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.2rem"><i class="fas fa-file-pdf"></i></div>
+            <div>
+              <div style="font-weight:800;color:#0d1a5e">PDF Format</div>
+              <div style="font-size:0.78rem;color:#6b7280">Best for printing at a business center</div>
+            </div>
+          </div>
+          <a href="{{ url_for('student.download_card', fmt='pdf') }}" class="btn btn-danger w-full">
+            <i class="fas fa-download"></i> Download PDF ID Card
+          </a>
+        </div>
+        <!-- PNG Download -->
+        <div style="background:#f0f2f8;border-radius:12px;padding:18px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+            <div style="width:44px;height:44px;border-radius:10px;background:#1565c0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.2rem"><i class="fas fa-image"></i></div>
+            <div>
+              <div style="font-weight:800;color:#0d1a5e">PNG Image Format</div>
+              <div style="font-size:0.78rem;color:#6b7280">Best for digital use or WhatsApp submission</div>
+            </div>
+          </div>
+          <a href="{{ url_for('student.download_card', fmt='png') }}" class="btn btn-primary w-full">
+            <i class="fas fa-download"></i> Download PNG ID Card
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="fas fa-info-circle"></i> Instructions</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        {% for step, text in [
+          ('1', 'Download the PDF version of your ID card.'),
+          ('2', 'Take it to any printing/business center and print on a card-size or A4 paper and cut.'),
+          ('3', 'The QR code on the card can be scanned by any phone camera or QR scanner app.'),
+          ('4', 'Scanning the QR code will display your full verified student profile.'),
+          ('5', 'If you lose your card, contact admin to regenerate a new QR code.'),
+        ] %}
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:26px;height:26px;border-radius:50%;background:#0d1a5e;color:#fff;font-size:0.75rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">{{ step }}</div>
+          <p style="font-size:0.83rem;color:#374151;padding-top:3px">{{ text }}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

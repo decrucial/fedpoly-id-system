@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}All Students{% endblock %}
+{% block page_title %}Student Management{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-users"></i> All Students</h1>
+  <div class="flex gap-2">
+    <a href="{{ url_for('admin.register_student') }}" class="btn btn-gold"><i class="fas fa-user-plus"></i> Register New</a>
+    <a href="{{ url_for('admin.report_students_pdf', department=department, level=level, status=status) }}" class="btn btn-primary" target="_blank"><i class="fas fa-file-pdf"></i> Export PDF</a>
+  </div>
+</div>
+
+<!-- Search & Filter -->
+<div class="card mb-2">
+  <form method="GET" class="flex flex-wrap gap-2 items-center">
+    <div class="search-input-wrap" style="flex:1;min-width:200px">
+      <i class="fas fa-search"></i>
+      <input type="text" name="search" value="{{ search }}" class="form-control search-input" placeholder="Search by name or matric number..."/>
+    </div>
+    <select name="department" class="form-control" style="width:200px">
+      <option value="">All Departments</option>
+      {% for dept in departments %}<option value="{{ dept }}" {% if department == dept %}selected{% endif %}>{{ dept }}</option>{% endfor %}
+    </select>
+    <select name="level" class="form-control" style="width:120px">
+      <option value="">All Levels</option>
+      <option value="ND 1" {% if level == 'ND 1' %}selected{% endif %}>ND 1</option>
+      <option value="ND 2" {% if level == 'ND 2' %}selected{% endif %}>ND 2</option>
+      <option value="HND 1" {% if level == 'HND 1' %}selected{% endif %}>HND 1</option>
+      <option value="HND 2" {% if level == 'HND 2' %}selected{% endif %}>HND 2</option>
+    </select>
+    <select name="status" class="form-control" style="width:130px">
+      <option value="">All Status</option>
+      <option value="active" {% if status == 'active' %}selected{% endif %}>Active</option>
+      <option value="suspended" {% if status == 'suspended' %}selected{% endif %}>Suspended</option>
+      <option value="expired" {% if status == 'expired' %}selected{% endif %}>Expired</option>
+    </select>
+    <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filter</button>
+    <a href="{{ url_for('admin.students') }}" class="btn btn-outline">Reset</a>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-list"></i> {{ students|length }} Student(s) Found</div>
+  </div>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Photo</th>
+          <th>Full Name</th>
+          <th>Matric Number</th>
+          <th>Department</th>
+          <th>Level</th>
+          <th>Session</th>
+          <th>Status</th>
+          <th>Registered</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in students %}
+        <tr>
+          <td style="color:#9ca3af;font-size:0.8rem">{{ loop.index }}</td>
+          <td>
+            {% if s.photo_filename %}
+            <img src="{{ url_for('static', filename='photos/' + s.photo_filename) }}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;border:2px solid #f9a825"/>
+            {% else %}
+            <div style="width:36px;height:36px;border-radius:8px;background:#e8eaf6;display:flex;align-items:center;justify-content:center;color:#0d1a5e;font-size:0.9rem"><i class="fas fa-user"></i></div>
+            {% endif %}
+          </td>
+          <td style="font-weight:700"><a href="{{ url_for('admin.view_student', student_id=s.id) }}" style="color:#0d1a5e;text-decoration:none">{{ s.full_name }}</a></td>
+          <td style="font-family:monospace;font-size:0.82rem;color:#374151">{{ s.matric_number }}</td>
+          <td style="font-size:0.83rem">{{ s.department }}</td>
+          <td><span style="background:#e8eaf6;color:#0d1a5e;padding:2px 8px;border-radius:6px;font-size:0.78rem;font-weight:700">{{ s.level }}</span></td>
+          <td style="font-size:0.8rem;color:#6b7280">{{ s.academic_session }}</td>
+          <td><span class="badge badge-{{ s.card_status }}">{{ s.card_status }}</span></td>
+          <td style="font-size:0.78rem;color:#9ca3af">{{ s.registered_at.strftime('%d/%m/%Y') if s.registered_at else '-' }}</td>
+          <td>
+            <div class="flex gap-2">
+              <a href="{{ url_for('admin.view_student', student_id=s.id) }}" class="btn btn-sm btn-primary btn-icon" title="View"><i class="fas fa-eye"></i></a>
+              <a href="{{ url_for('admin.edit_student', student_id=s.id) }}" class="btn btn-sm btn-gold btn-icon" title="Edit"><i class="fas fa-edit"></i></a>
+              <a href="{{ url_for('admin.download_card', student_id=s.id, fmt='pdf') }}" class="btn btn-sm btn-outline btn-icon" title="Download PDF"><i class="fas fa-file-pdf"></i></a>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="10" style="text-align:center;padding:40px;color:#9ca3af">
+          <i class="fas fa-users" style="font-size:2rem;display:block;margin-bottom:10px;opacity:0.3"></i>
+          No students found. <a href="{{ url_for('admin.register_student') }}" style="color:#0d1a5e;font-weight:700">Register the first student.</a>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

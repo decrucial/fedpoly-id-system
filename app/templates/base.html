@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}FedPoly Nasarawa — ID Verification System{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nunito:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}"/>
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+
+{% if current_user.is_authenticated %}
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="Logo" class="brand-logo"/>
+    <div class="brand-text">
+      <span class="brand-name">FedPoly</span>
+      <span class="brand-sub">Nasarawa</span>
+    </div>
+  </div>
+
+  <div class="sidebar-user">
+    <div class="user-avatar">{{ current_user.username[0].upper() }}</div>
+    <div class="user-info">
+      <span class="user-name">{{ current_user.username }}</span>
+      <span class="user-role role-{{ current_user.role.value }}">{{ current_user.role.value.upper() }}</span>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    {% if current_user.role.value == 'admin' %}
+      <a href="{{ url_for('admin.dashboard') }}" class="nav-item {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+        <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
+      </a>
+      <a href="{{ url_for('admin.students') }}" class="nav-item {% if request.endpoint and 'student' in request.endpoint %}active{% endif %}">
+        <i class="fas fa-users"></i><span>Students</span>
+      </a>
+      <a href="{{ url_for('admin.register_student') }}" class="nav-item {% if request.endpoint == 'admin.register_student' %}active{% endif %}">
+        <i class="fas fa-user-plus"></i><span>Register Student</span>
+      </a>
+      <a href="{{ url_for('admin.staff_list') }}" class="nav-item {% if request.endpoint and 'staff' in request.endpoint %}active{% endif %}">
+        <i class="fas fa-chalkboard-teacher"></i><span>Staff</span>
+      </a>
+      <a href="{{ url_for('admin.departments') }}" class="nav-item {% if request.endpoint and 'department' in request.endpoint %}active{% endif %}">
+        <i class="fas fa-sitemap"></i><span>Departments</span>
+      </a>
+      <a href="{{ url_for('admin.scan_logs') }}" class="nav-item {% if request.endpoint == 'admin.scan_logs' %}active{% endif %}">
+        <i class="fas fa-qrcode"></i><span>Scan Logs</span>
+      </a>
+      <a href="{{ url_for('admin.reports') }}" class="nav-item {% if request.endpoint == 'admin.reports' %}active{% endif %}">
+        <i class="fas fa-file-alt"></i><span>Reports</span>
+      </a>
+    {% elif current_user.role.value == 'staff' %}
+      <a href="{{ url_for('staff.dashboard') }}" class="nav-item {% if request.endpoint == 'staff.dashboard' %}active{% endif %}">
+        <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
+      </a>
+      <a href="{{ url_for('staff.scanner') }}" class="nav-item {% if request.endpoint == 'staff.scanner' %}active{% endif %}">
+        <i class="fas fa-camera"></i><span>Scan QR Code</span>
+      </a>
+      <a href="{{ url_for('staff.scan_logs') }}" class="nav-item {% if request.endpoint == 'staff.scan_logs' %}active{% endif %}">
+        <i class="fas fa-history"></i><span>My Scan History</span>
+      </a>
+    {% elif current_user.role.value == 'student' %}
+      <a href="{{ url_for('student.dashboard') }}" class="nav-item {% if request.endpoint == 'student.dashboard' %}active{% endif %}">
+        <i class="fas fa-home"></i><span>Dashboard</span>
+      </a>
+      <a href="{{ url_for('student.id_card') }}" class="nav-item {% if request.endpoint == 'student.id_card' %}active{% endif %}">
+        <i class="fas fa-id-card"></i><span>My ID Card</span>
+      </a>
+      <a href="{{ url_for('student.profile') }}" class="nav-item {% if request.endpoint == 'student.profile' %}active{% endif %}">
+        <i class="fas fa-user"></i><span>My Profile</span>
+      </a>
+    {% endif %}
+
+    <div class="nav-divider"></div>
+    <a href="{{ url_for('auth.change_password') }}" class="nav-item">
+      <i class="fas fa-lock"></i><span>Change Password</span>
+    </a>
+    <a href="{{ url_for('auth.logout') }}" class="nav-item nav-logout">
+      <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+    </a>
+  </nav>
+</nav>
+
+<div class="main-wrapper">
+  <header class="topbar">
+    <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+    <div class="topbar-title">{% block page_title %}{% endblock %}</div>
+    <div class="topbar-right">
+      <span class="topbar-date"><i class="far fa-calendar-alt"></i> {{ now.strftime('%d %B %Y') if now else '' }}</span>
+    </div>
+  </header>
+
+  <main class="content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="alerts-container">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+              <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-circle{% elif category == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+              {{ message }}
+              <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+
+  </main>
+</div>
+
+{% else %}
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="alerts-container fixed-alerts">
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">
+            <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-circle{% elif category == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+            {{ message }}
+            <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+{% endif %}
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>
